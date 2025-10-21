@@ -1,24 +1,336 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Hello World</title>
-  <style>
-    body {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      background-color: #f0f0f0;
-      font-family: Arial, sans-serif;
-    }
-    h1 {
-      color: #333;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>URL Content Analyzer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 800px;
+            transition: transform 0.3s ease;
+        }
+
+        .container:hover {
+            transform: translateY(-5px);
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 2.5rem;
+            font-weight: 700;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 40px;
+            font-size: 1.1rem;
+        }
+
+        .input-group {
+            margin-bottom: 30px;
+        }
+
+        .url-input {
+            width: 100%;
+            padding: 15px 20px;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        .url-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .url-input::placeholder {
+            color: #aaa;
+        }
+
+        .analyze-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .analyze-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .analyze-btn:active {
+            transform: translateY(0);
+        }
+
+        .analyze-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .results {
+            margin-top: 30px;
+            padding: 25px;
+            background: #f8f9fa;
+            border-radius: 12px;
+            border-left: 4px solid #667eea;
+            display: none;
+        }
+
+        .results h3 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 1.3rem;
+        }
+
+        .result-item {
+            margin-bottom: 15px;
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        .result-label {
+            font-weight: 600;
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+
+        .result-value {
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .error {
+            background: #fee;
+            border-left-color: #e74c3c;
+            color: #c0392b;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 25px;
+                margin: 10px;
+            }
+
+            h1 {
+                font-size: 2rem;
+            }
+
+            .url-input, .analyze-btn {
+                padding: 12px 16px;
+            }
+        }
+    </style>
 </head>
 <body>
-  <h1>Hello Nas, welcome to your project!</h1>
+    <div class="container">
+        <h1>🔍 URL Analyzer</h1>
+        <p class="subtitle">Discover what's inside any web page instantly</p>
+        
+        <form id="analyzerForm">
+            <div class="input-group">
+                <input 
+                    type="url" 
+                    id="urlInput" 
+                    class="url-input" 
+                    placeholder="Enter URL (e.g., https://example.com)" 
+                    required
+                >
+            </div>
+            
+            <button type="submit" class="analyze-btn" id="analyzeBtn">
+                Analyze URL
+            </button>
+        </form>
+
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>Analyzing URL content...</p>
+        </div>
+
+        <div class="results" id="results">
+            <h3>📊 Analysis Results</h3>
+            <div id="resultsContent"></div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('analyzerForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const urlInput = document.getElementById('urlInput');
+            const analyzeBtn = document.getElementById('analyzeBtn');
+            const loading = document.getElementById('loading');
+            const results = document.getElementById('results');
+            const resultsContent = document.getElementById('resultsContent');
+            
+            const url = urlInput.value.trim();
+            
+            if (!url) {
+                alert('Please enter a valid URL');
+                return;
+            }
+
+            // Show loading state
+            analyzeBtn.disabled = true;
+            loading.style.display = 'block';
+            results.style.display = 'none';
+
+            try {
+                // TODO: Replace this with actual API call to your backend
+                // For now, this is a demo with simulated data
+                await simulateAnalysis(url);
+                
+                // Hide loading
+                loading.style.display = 'none';
+                analyzeBtn.disabled = false;
+                
+                // Show results
+                displayResults(url);
+                
+            } catch (error) {
+                loading.style.display = 'none';
+                analyzeBtn.disabled = false;
+                displayError(error.message);
+            }
+        });
+
+        // Simulate API call - replace with actual backend integration
+        function simulateAnalysis(url) {
+            return new Promise((resolve) => {
+                setTimeout(() => {
+                    resolve();
+                }, 2000);
+            });
+        }
+
+        function displayResults(url) {
+            const resultsContent = document.getElementById('resultsContent');
+            const results = document.getElementById('results');
+            
+            // TODO: Replace with actual analyzed data from your backend
+            const mockData = {
+                title: "Sample Page Title",
+                description: "This is a sample description of the analyzed webpage content.",
+                wordCount: "1,247 words",
+                images: "15 images found",
+                links: "32 internal links, 8 external links",
+                loadTime: "1.2 seconds",
+                status: "200 OK"
+            };
+
+            resultsContent.innerHTML = `
+                <div class="result-item">
+                    <div class="result-label">🌐 URL</div>
+                    <div class="result-value">${url}</div>
+                </div>
+                <div class="result-item">
+                    <div class="result-label">📄 Page Title</div>
+                    <div class="result-value">${mockData.title}</div>
+                </div>
+                <div class="result-item">
+                    <div class="result-label">📝 Description</div>
+                    <div class="result-value">${mockData.description}</div>
+                </div>
+                <div class="result-item">
+                    <div class="result-label">📊 Content Stats</div>
+                    <div class="result-value">${mockData.wordCount}</div>
+                </div>
+                <div class="result-item">
+                    <div class="result-label">🖼️ Media</div>
+                    <div class="result-value">${mockData.images}</div>
+                </div>
+                <div class="result-item">
+                    <div class="result-label">🔗 Links</div>
+                    <div class="result-value">${mockData.links}</div>
+                </div>
+                <div class="result-item">
+                    <div class="result-label">⚡ Performance</div>
+                    <div class="result-value">Load time: ${mockData.loadTime}</div>
+                </div>
+                <div class="result-item">
+                    <div class="result-label">✅ Status</div>
+                    <div class="result-value">${mockData.status}</div>
+                </div>
+            `;
+            
+            results.style.display = 'block';
+        }
+
+        function displayError(message) {
+            const resultsContent = document.getElementById('resultsContent');
+            const results = document.getElementById('results');
+            
+            resultsContent.innerHTML = `
+                <div class="result-item error">
+                    <div class="result-label">❌ Error</div>
+                    <div class="result-value">${message}</div>
+                </div>
+            `;
+            
+            results.className = 'results error';
+            results.style.display = 'block';
+        }
+    </script>
 </body>
 </html>
